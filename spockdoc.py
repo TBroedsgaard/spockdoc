@@ -154,6 +154,9 @@ def process_with_pandoc(pandoc, config, work_dir, preprocessed_markdown_files):
 
     return pandoc_tex_file
 
+def inject_repository(rules):
+    return rules
+
 if __name__ == '__main__':
     arguments = docopt(__doc__)
 
@@ -190,8 +193,11 @@ if __name__ == '__main__':
     preprocessing_rules = list()
     for key, value in config['preprocessing'].items():
         # TODO: Check key and value for magic injection
+        key = re.sub(r'<repository>', repository, key)
+        value = re.sub(r'<repository>', repository, value)
         preprocessing_rules.append((key, value))
 
+    preprocessing_rules = inject_repository(preprocessing_rules)
 
     preprocessed_markdown_files = preprocess(
         markdown_files, preprocessing_rules, doc_dir, work_dir)
@@ -201,7 +207,13 @@ if __name__ == '__main__':
 
     postprocessing_rules = list()
     for key, value in config['postprocessing'].items():
+        # TODO: Remove duplication
+        key = re.sub(r'<repository>', repository, key)
+        value = re.sub(r'<repository>', repository, value)
+        print(key, value)
         postprocessing_rules.append((key, value))
+
+    postprocessing_rules = inject_repository(postprocessing_rules)
 
     postprocessed_tex_file = postprocess(pandoc_tex_file, postprocessing_rules,
                                          work_dir)
