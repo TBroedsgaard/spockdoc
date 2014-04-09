@@ -27,29 +27,22 @@ Options:
     -h, --help               Show this screen
 """
 
-# Input format should be as close as possible to standard markdown!
-# Necessary conversion pre-pandoc done by preprocessor!
-
-# spockdoc.conf should take arguments like author = author_name and iterate over
-# all of them (and just add them, no special case stuff, plain pandoc arguments)
-# It is required that ConfigParser can iterate over all keys in a section
-# for key in config['bitbucket.org']: print(key)
-
-# references in figures and tables should look like header refs: (#reference)
-# and referenced by [text](#reference) - ? Might not work in StackEdit
-
+# TODO: Test with several input files
+# TODO: Unit tests in general
 
 __author__ = 'troels'
 
-from docopt import docopt
+# Standard library imports
 from os import path, chdir
-from sh import git
 from subprocess import call
 from configparser import ConfigParser
 from tempfile import TemporaryDirectory
-# import requests
 import re
 from shutil import copy2
+
+# PyPI imports
+from docopt import docopt
+from sh import git
 
 
 def is_valid_repo(repository_path):
@@ -74,9 +67,6 @@ def checkout_commit(commit_name):
 
 def restore_repository(head):
     git.checkout(head)
-    # also reset any changes - THIS IS DANGEROUS STUFF. Best not change files
-    # which are being tracked
-    # avoid this by using a temporary directory
 
 
 def get_current_head(repository):
@@ -135,72 +125,17 @@ def generate_pdf(postprocessed_tex_file, output_file):
     print('PDF file copied to', output_file)
 
 
-def build_pandoc_call(config_parser, tmp_output_file):
-    input_files = config_parser['DEFAULT']['input_files'].split(', ')
-    pandoc_options = config_parser['DEFAULT']['pandoc_options'].split(', ')
-    template = config_parser['DEFAULT']['template']
-
-    authors = config_parser['TEMPLATE_VARIABLES']['authors'].split(', ')
-    date = config_parser['TEMPLATE_VARIABLES']['date']
-
-    print(input_files, tmp_output_file)
-    print(pandoc_options)
-    print(authors)
-
-    pandoc_call = list()
-    pandoc_call.append(arguments['--pandoc'])
-    pandoc_call += pandoc_options
-    pandoc_call.append('--template=' + template)
-
-    for author in authors:
-        pandoc_call.append('-V')
-        pandoc_call.append('--author=' + author)
-
-    pandoc_call.append('-V')
-    pandoc_call.append('--date=' + date)
-
-    pandoc_call.append('-o')
-    pandoc_call.append(tmp_output_file)
-
-    pandoc_call += input_files
-
-    print(pandoc_call)
-
-    return pandoc_call
-
-
-def create_documentation():
-    config_path = arguments['--config']
-
-    config_parser = ConfigParser()
-    config_parser.read(config_path)
-
-    input_files = config_parser['DEFAULT']['input_files'].split(', ')
-    output_file = config_parser['DEFAULT']['output_file']
-
-    chdir('doc')
-
-    with TemporaryDirectory() as tmp_dir:
-        for input_file in input_files:
-            preprocess(input_file, tmp_dir)
-
-        # need to know the names of the preprocessed files...
-
-        tmp_output_file = tmp_dir + '/output.tex'
-        pandoc_call = build_pandoc_call(config_parser, tmp_output_file)
-        call(pandoc_call)
-
-        postprocess(tmp_output_file, output_file)
-
-
 def process_with_pandoc(pandoc, config, work_dir, preprocessed_markdown_files):
-    # build pandoc call on preprocessed files
-    pandoc_arguments = config['base']['pandoc arguments'].split(' | ')
-    pandoc_template = config['base']['template']
-
     pandoc_call = [pandoc]
+
+    pandoc_arguments = config['base']['pandoc arguments'].split(' | ')
     pandoc_call += pandoc_arguments
-    pandoc_call += ['--template=' + pandoc_template]
+
+    try:
+        pandoc_template = config['base']['template']
+        pandoc_call += ['--template=' + pandoc_template]
+    except KeyError:
+        pass
 
     template_variables = list()
     for key, value in config['template variables'].items():
@@ -213,19 +148,16 @@ def process_with_pandoc(pandoc, config, work_dir, preprocessed_markdown_files):
 
     pandoc_tex_file = path.join(work_dir, 'pandoc_output.tex')
     pandoc_call += ['-o', pandoc_tex_file]
-
     pandoc_call += preprocessed_markdown_files
 
     call(pandoc_call)
-    print(pandoc_call)
 
     return pandoc_tex_file
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
-    print(arguments)
 
-    # build absolute paths with abspath
+    # TODO: Test relative paths in config file. Relative to cwd or doc/?
     repository = path.abspath(arguments['<repository>'])
     branch = arguments['--branch']
     commit = arguments['--commit']
@@ -257,7 +189,9 @@ if __name__ == '__main__':
     markdown_files = config['base']['input files'].split(' | ')
     preprocessing_rules = list()
     for key, value in config['preprocessing'].items():
+        # TODO: Check key and value for magic injection
         preprocessing_rules.append((key, value))
+
 
     preprocessed_markdown_files = preprocess(
         markdown_files, preprocessing_rules, doc_dir, work_dir)
@@ -267,10 +201,7 @@ if __name__ == '__main__':
 
     postprocessing_rules = list()
     for key, value in config['postprocessing'].items():
-        print(key, value)
         postprocessing_rules.append((key, value))
-    #postprocessing_rules.append((r'\\hyperref\[([\w,-]+)\]\{.+\}',
-    #                             r'\\autoref{\g<1>}'))
 
     postprocessed_tex_file = postprocess(pandoc_tex_file, postprocessing_rules,
                                          work_dir)
