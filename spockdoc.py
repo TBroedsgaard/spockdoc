@@ -132,6 +132,11 @@ def generate_pdf(postprocessed_tex_file, output_file):
     call(['pdflatex', '-output-directory=' + work_dir, postprocessed_tex_file])
     call(['pdflatex', '-output-directory=' + work_dir, postprocessed_tex_file])
 
+    # TODO: Fix, should not be work_dir but repo dir
+    # Above is an assumption, who says we want "compiled" documentation in repo?
+    # But fact is, using work_dir is a no go - especially with tmp_dir
+    # Fails if it needs folder which isn't there
+    # Maybe only overwrite if output_file is not already an abspath?
     output_file = path.join(work_dir, output_file)
 
     pdf_file = postprocessed_tex_file[:-3] + 'pdf'
@@ -170,13 +175,16 @@ def process_with_pandoc(pandoc, config, work_dir, preprocessed_markdown_files):
 
     return pandoc_tex_file
 
+
 def inject_repository(rules):
     return rules
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
 
-    # TODO: Test relative paths in config file. Relative to cwd or doc/?
+    # TODO: Test relative paths in config file. Relative to cwd or doc_dir?
+    # Template file should be relative to doc_dir or repo
+    # or maybe use the magic <repository>?
     repository = path.abspath(arguments['<repository>'])
     branch = arguments['--branch']
     commit = arguments['--commit']
