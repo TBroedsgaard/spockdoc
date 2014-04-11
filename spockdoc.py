@@ -129,8 +129,8 @@ def apply_rules(lines, rules):
 
 
 def generate_pdf(postprocessed_tex_file, output_file):
-    call(['pdflatex', '-output-directory=' + work_dir, postprocessed_tex_file])
-    call(['pdflatex', '-output-directory=' + work_dir, postprocessed_tex_file])
+    call(['pdflatex', '-shell-escape', postprocessed_tex_file])
+    call(['pdflatex', '-shell-escape', postprocessed_tex_file])
 
     # TODO: Fix, should not be work_dir but repo dir
     # Above is an assumption, who says we want "compiled" documentation in repo?
@@ -242,9 +242,11 @@ if __name__ == '__main__':
     postprocessed_tex_file = postprocess(pandoc_tex_file, postprocessing_rules,
                                          work_dir)
     output_file = config['base']['output file']
+    chdir(work_dir)
     generate_pdf(postprocessed_tex_file, output_file)
 
     if cleanup_needed:
         tmp_dir.cleanup()
 
+    chdir(repository)
     restore_repository(HEAD)
