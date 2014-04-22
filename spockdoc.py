@@ -63,10 +63,6 @@ from shutil import copy2
 
 # PyPI imports
 from docopt import docopt
-try:
-    from sh import git
-except:
-    pass
 
 
 def is_valid_repo(repository_path):
