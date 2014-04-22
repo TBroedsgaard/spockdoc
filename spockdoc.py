@@ -113,7 +113,7 @@ def preprocess(markdown_files, rules, doc_dir, work_dir):
             writer.writelines(lines)
         preprocessed_markdown_files.append(preprocessed_markdown_file)
 
-        return preprocessed_markdown_files
+    return preprocessed_markdown_files
 
 
 def postprocess(pandoc_tex_file, rules, work_dir):
