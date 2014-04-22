@@ -46,6 +46,11 @@ Options:
 # TODO: Test with several input files
 # TODO: Unit tests in general
 
+# TODO: Make pdflatex call configurable like pandoc using config file
+# and take a path to pdflatex (or xelatex) binary on commandline
+
+# TODO: Test on Windows, might need to use subprocess instead of sh
+
 __author__ = 'troels'
 
 # Standard library imports
