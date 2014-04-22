@@ -63,7 +63,10 @@ from shutil import copy2
 
 # PyPI imports
 from docopt import docopt
-from sh import git
+try:
+    from sh import git
+except:
+    pass
 
 
 def is_valid_repo(repository_path):
@@ -76,18 +79,21 @@ def is_valid_repo(repository_path):
 
 
 def checkout_branch(branch_name):
-    git.checkout(branch_name)
+    # git.checkout(branch_name)
+    call(['git', 'checkout',  branch_name])
 
 
 def checkout_commit(commit_name):
     if commit == 'HEAD':
         return
 
-    git.checkout(commit_name)
+    #git.checkout(commit_name)
+    call(['git', 'checkout', commit_name])
 
 
 def restore_repository(head):
-    git.checkout(head)
+    #git.checkout(head)
+    call(['git', 'checkout', head])
 
 
 def get_current_head(repository):
