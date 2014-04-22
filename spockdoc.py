@@ -49,7 +49,7 @@ Options:
 # TODO: Make pdflatex call configurable like pandoc using config file
 # and take a path to pdflatex (or xelatex) binary on commandline
 
-# TODO: Test on Windows, might need to use subprocess instead of sh
+# TODO: Take path to git binary as option on commandline
 
 __author__ = 'troels'
 
